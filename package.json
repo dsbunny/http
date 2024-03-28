@@ -1,0 +1,21 @@
+{
+  "name": "@dsbunny/http",
+  "version": "1.0.0",
+  "description": "HTTP utility APIs wrapping fetch() with retry and backoff",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Steve-o <fnjordy@gmail.com>",
+  "license": "UNLICENSED",
+  "private": true,
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "@types/opossum": "^8.1.6",
+    "typescript": "^5.4.3"
+  },
+  "dependencies": {
+    "opossum": "^8.1.3"
+  }
+}
