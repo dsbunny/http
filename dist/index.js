@@ -22,4 +22,5 @@ __exportStar(require("./http-data.js"), exports);
 __exportStar(require("./http-file.js"), exports);
 __exportStar(require("./http-json.js"), exports);
 __exportStar(require("./retry.js"), exports);
+__exportStar(require("./server-timings-middleware.js"), exports);
 //# sourceMappingURL=index.js.map

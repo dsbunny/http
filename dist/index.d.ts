@@ -5,4 +5,5 @@ export * from './http-data.js';
 export * from './http-file.js';
 export * from './http-json.js';
 export * from './retry.js';
+export * from './server-timings-middleware.js';
 //# sourceMappingURL=index.d.ts.map
