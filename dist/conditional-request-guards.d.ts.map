@@ -1,0 +1,1 @@
+{"version":3,"file":"conditional-request-guards.d.ts","sourceRoot":"","sources":["../src/conditional-request-guards.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,OAAO,EAAE,MAAM,SAAS,CAAC;AAMlC,wBAAgB,wBAAwB,CACvC,GAAG,EAAE,OAAO,EACZ,WAAW,EAAE,MAAM,EACnB,uBAAuB,EAAE,MAAM,GAC7B;IACF,MAAM,EAAE,MAAM,CAAC;IACf,UAAU,EAAE,MAAM,CAAC;CAClB,CAsED"}
