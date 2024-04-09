@@ -111,7 +111,15 @@ async function putPart(url, handle, init) {
     });
     // HTTP status code 412 Precondition Failed indicates that the resource
     // already exists, and the If-None-Match condition was not met.
-    if (!response.ok || response.status === 412) {
+    // REF: RFC-7232, Section 6.
+    // Note invalid implementations may return 304 Not Modified instead, e.g.
+    // MinIO server RELEASE.2023-11-20T22-40-07Z.
+    if (response.status === 304
+        || response.status === 412) {
+        console.log(`Part already uploaded: ${response.status}`);
+        return response;
+    }
+    if (!response.ok) {
         throw new Error(`HTTP status: ${response.status}`);
     }
     if (response.body === null) {
@@ -174,12 +182,21 @@ async function getPart(url, init) {
         retryMaxDelay: BACKOFF_MAX_INTERVAL,
         logBody: init.logBody,
     });
+    // HTTP status code 412 Precondition Failed indicates that the resource
+    // has changed, and the If-Match condition was not met.
+    if (response.status === 412) {
+        console.log(`Part has changed: ${response.status}`);
+        return response;
+    }
     if (!response.ok) {
         throw new Error(`HTTP status: ${response.status}`);
     }
     if (response.body === null) {
         throw new Error('Response body is null');
     }
+    // ETag mismatch indicates a server failure, as the server should not
+    // return a different ETag for the same resource without a 412 status
+    // code.
     if (init.ETag
         && response.headers.get('ETag') !== init.ETag) {
         throw new Error(`ETag mismatch: ${response.headers.get('ETag')} !== ${init.ETag}`);
