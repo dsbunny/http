@@ -28,12 +28,14 @@ export async function fetch_with_log(
 	}
 ): Promise<Response> {
 	const request_headers = Array.from(new Headers(init?.headers ?? {}).entries());
-	console.log(styleText('grey',
-		`${init?.method ?? 'GET'} ${url}
-${request_headers.map(([key, value]) => `${key}: ${value}`).join('\n')}
-${(!init || !init.body || (init.body instanceof Readable)) ? '' : init.body}
-`,
-	));
+	console.log(styleText('cyan', `${init?.method ?? 'GET'} ${url}`));
+	console.log(request_headers.map(([key, value]) => `${key}: ${value}`).join('\n'));
+	const body = init?.body;
+	if(typeof body === 'string') {
+		body.split('\n').forEach((line) => {
+			console.log(styleText('grey', line));
+		});
+	}
 	const response = await fetch(url, init);
 	// Serialize the headers to a string
 	const response_headers = Array.from(response.headers.entries())
@@ -41,16 +43,16 @@ ${(!init || !init.body || (init.body instanceof Readable)) ? '' : init.body}
 		|| (init && 'logBody' in init && init.logBody))
 	{
 		const text = await response.clone().text();
-		console.log(styleText(style_for_status(response.status),
-		`HTTP ${response.status} ${response.statusText}
-${response_headers.map(([key, value]) => `${key}: ${value}`).join('\n')}
-${text}`,
-		));
+		console.log(styleText(style_for_status(response.status), `HTTP ${response.status} ${response.statusText}`));
+		console.log(response_headers.map(([key, value]) => `${key}: ${value}`).join('\n'));
+		// Docker logs will reset style after each line.
+		// So we need to split the text into lines and style each line.
+		text.split('\n').forEach((line) => {
+			console.log(styleText('grey', line));
+		});
 	} else {
-		console.log(styleText(style_for_status(response.status),
-			`HTTP ${response.status} ${response.statusText}
-${response_headers.map(([key, value]) => `${key}: ${value}`).join('\n')}`,
-		));
+		console.log(styleText(style_for_status(response.status), `HTTP ${response.status} ${response.statusText}`));
+		console.log(response_headers.map(([key, value]) => `${key}: ${value}`).join('\n'));
 	}
 	return response;
 }

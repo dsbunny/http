@@ -2,7 +2,6 @@
 // vim: tabstop=8 softtabstop=0 noexpandtab shiftwidth=8 nosmarttab
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.fetch_with_retry_after = exports.fetch_with_log = void 0;
-const node_stream_1 = require("node:stream");
 // @ts-expect-error
 const node_util_1 = require("node:util");
 const retry_js_1 = require("./retry.js");
@@ -22,23 +21,31 @@ function style_for_status(status) {
 }
 async function fetch_with_log(url, init) {
     const request_headers = Array.from(new Headers(init?.headers ?? {}).entries());
-    console.log((0, node_util_1.styleText)('grey', `${init?.method ?? 'GET'} ${url}
-${request_headers.map(([key, value]) => `${key}: ${value}`).join('\n')}
-${(!init || !init.body || (init.body instanceof node_stream_1.Readable)) ? '' : init.body}
-`));
+    console.log((0, node_util_1.styleText)('cyan', `${init?.method ?? 'GET'} ${url}`));
+    console.log(request_headers.map(([key, value]) => `${key}: ${value}`).join('\n'));
+    const body = init?.body;
+    if (typeof body === 'string') {
+        body.split('\n').forEach((line) => {
+            console.log((0, node_util_1.styleText)('grey', line));
+        });
+    }
     const response = await fetch(url, init);
     // Serialize the headers to a string
     const response_headers = Array.from(response.headers.entries());
     if ((response.status >= 400 && response.status < 600)
         || (init && 'logBody' in init && init.logBody)) {
         const text = await response.clone().text();
-        console.log((0, node_util_1.styleText)(style_for_status(response.status), `HTTP ${response.status} ${response.statusText}
-${response_headers.map(([key, value]) => `${key}: ${value}`).join('\n')}
-${text}`));
+        console.log((0, node_util_1.styleText)(style_for_status(response.status), `HTTP ${response.status} ${response.statusText}`));
+        console.log(response_headers.map(([key, value]) => `${key}: ${value}`).join('\n'));
+        // Docker logs will reset style after each line.
+        // So we need to split the text into lines and style each line.
+        text.split('\n').forEach((line) => {
+            console.log((0, node_util_1.styleText)('grey', line));
+        });
     }
     else {
-        console.log((0, node_util_1.styleText)(style_for_status(response.status), `HTTP ${response.status} ${response.statusText}
-${response_headers.map(([key, value]) => `${key}: ${value}`).join('\n')}`));
+        console.log((0, node_util_1.styleText)(style_for_status(response.status), `HTTP ${response.status} ${response.statusText}`));
+        console.log(response_headers.map(([key, value]) => `${key}: ${value}`).join('\n'));
     }
     return response;
 }

@@ -1,4 +1,8 @@
 # Changelog
+## v2.0.5
+- Style request and response body in _grey_, splitting into separate lines due to `docker log` resetting ANSI style per line.
+- Change HTTP command line to cyan.
+
 ## v2.0.4
 - Always log body for HTTP/400-599 errors.
 - Enable HTTP/400-499 errors to exit early on retry.

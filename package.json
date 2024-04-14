@@ -1,6 +1,6 @@
 {
   "name": "@dsbunny/http",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "HTTP utility APIs wrapping fetch() with retry and backoff",
   "main": "dist/index.js",
   "scripts": {
