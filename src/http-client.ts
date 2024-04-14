@@ -41,8 +41,11 @@ export async function uploadStream(
 	} as RequestInit);
 	// HTTP status code 412 Precondition Failed indicates that the resource
 	// already exists, and the If-None-Match condition was not met.
-	if(!response.ok || response.status === 412) {
-		throw new Error(`HTTP status: ${response.status}`);
+	if(!response.ok) {
+		if(response.status >= 500 && response.status < 600) {
+			throw new Error(`HTTP status: ${response.status}`);
+		}
+		return response;
 	}
 	if(response.headers.get('ETag') !== ETag) {
 		throw new Error(`ETag mismatch: ${response.headers.get('ETag')} !== ${ETag}`);
@@ -77,7 +80,10 @@ export async function download(
 		retryMaxDelay: BACKOFF_MAX_INTERVAL,
 	});
 	if(!response.ok) {
-		throw new Error(`HTTP status: ${response.status}`);
+		if(response.status >= 500 && response.status < 600) {
+			throw new Error(`HTTP status: ${response.status}`);
+		}
+		return response;
 	}
 	return response;
 }

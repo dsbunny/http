@@ -120,7 +120,10 @@ async function putPart(url, handle, init) {
         return response;
     }
     if (!response.ok) {
-        throw new Error(`HTTP status: ${response.status}`);
+        if (response.status >= 500 && response.status < 600) {
+            throw new Error(`HTTP status: ${response.status}`);
+        }
+        return response;
     }
     if (response.body === null) {
         throw new Error('Response body is null');
@@ -189,7 +192,10 @@ async function getPart(url, init) {
         return response;
     }
     if (!response.ok) {
-        throw new Error(`HTTP status: ${response.status}`);
+        if (response.status >= 500 && response.status < 600) {
+            throw new Error(`HTTP status: ${response.status}`);
+        }
+        return response;
     }
     if (response.body === null) {
         throw new Error('Response body is null');

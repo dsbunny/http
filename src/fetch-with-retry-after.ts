@@ -9,6 +9,18 @@ import {
 	exponential_backoff_with_jitter,
 } from './retry.js';
 
+function style_for_status(status: number) {
+	if(status >= 200 && status < 300) {
+		return 'green';
+	} else if(status >= 300 && status < 400) {
+		return 'yellow';
+	} else if(status >= 400 && status < 600) {
+		return 'red';
+	} else {
+		return 'grey';
+	}
+}
+
 export async function fetch_with_log(
 	url: string | URL | globalThis.Request,
 	init?: RequestInit & {
@@ -25,15 +37,17 @@ ${(!init || !init.body || (init.body instanceof Readable)) ? '' : init.body}
 	const response = await fetch(url, init);
 	// Serialize the headers to a string
 	const response_headers = Array.from(response.headers.entries())
-	if(init && 'logBody' in init && init.logBody) {
+	if((response.status >= 400 && response.status < 600)
+		|| (init && 'logBody' in init && init.logBody))
+	{
 		const text = await response.clone().text();
-		console.log(styleText('grey',
+		console.log(styleText(style_for_status(response.status),
 		`HTTP ${response.status} ${response.statusText}
 ${response_headers.map(([key, value]) => `${key}: ${value}`).join('\n')}
 ${text}`,
 		));
 	} else {
-		console.log(styleText('grey',
+		console.log(styleText(style_for_status(response.status),
 			`HTTP ${response.status} ${response.statusText}
 ${response_headers.map(([key, value]) => `${key}: ${value}`).join('\n')}`,
 		));

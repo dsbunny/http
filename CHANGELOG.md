@@ -1,4 +1,8 @@
 # Changelog
+## v2.0.4
+- Always log body for HTTP/400-599 errors.
+- Enable HTTP/400-499 errors to exit early on retry.
+
 ## v2.0.3
 - Add `contentLength` and `contentMd5` fields to responses of `putJson()`,
   `postJson()`, and `patchJson()`.

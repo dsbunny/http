@@ -6,6 +6,20 @@ const node_stream_1 = require("node:stream");
 // @ts-expect-error
 const node_util_1 = require("node:util");
 const retry_js_1 = require("./retry.js");
+function style_for_status(status) {
+    if (status >= 200 && status < 300) {
+        return 'green';
+    }
+    else if (status >= 300 && status < 400) {
+        return 'yellow';
+    }
+    else if (status >= 400 && status < 600) {
+        return 'red';
+    }
+    else {
+        return 'grey';
+    }
+}
 async function fetch_with_log(url, init) {
     const request_headers = Array.from(new Headers(init?.headers ?? {}).entries());
     console.log((0, node_util_1.styleText)('grey', `${init?.method ?? 'GET'} ${url}
@@ -15,14 +29,15 @@ ${(!init || !init.body || (init.body instanceof node_stream_1.Readable)) ? '' : 
     const response = await fetch(url, init);
     // Serialize the headers to a string
     const response_headers = Array.from(response.headers.entries());
-    if (init && 'logBody' in init && init.logBody) {
+    if ((response.status >= 400 && response.status < 600)
+        || (init && 'logBody' in init && init.logBody)) {
         const text = await response.clone().text();
-        console.log((0, node_util_1.styleText)('grey', `HTTP ${response.status} ${response.statusText}
+        console.log((0, node_util_1.styleText)(style_for_status(response.status), `HTTP ${response.status} ${response.statusText}
 ${response_headers.map(([key, value]) => `${key}: ${value}`).join('\n')}
 ${text}`));
     }
     else {
-        console.log((0, node_util_1.styleText)('grey', `HTTP ${response.status} ${response.statusText}
+        console.log((0, node_util_1.styleText)(style_for_status(response.status), `HTTP ${response.status} ${response.statusText}
 ${response_headers.map(([key, value]) => `${key}: ${value}`).join('\n')}`));
     }
     return response;
