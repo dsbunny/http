@@ -1,7 +1,8 @@
 # Changelog
-## v1.3.3
+## v2.0.3
 - Add `contentLength` and `contentMd5` fields to responses of `putJson()`,
   `postJson()`, and `patchJson()`.
+- Breaking ABI change.
 
 ## v1.2.2
 - Add `conditionalRequestGuards()` API for ExpressJS handlers.
