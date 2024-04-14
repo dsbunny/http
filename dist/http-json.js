@@ -15,7 +15,11 @@ async function putJson(url, json, init) {
         contentMd5,
         logBody: init?.logBody,
     });
-    return response;
+    return {
+        response,
+        contentLength: text.length,
+        contentMd5,
+    };
 }
 exports.putJson = putJson;
 async function getJson(url, init) {
@@ -40,7 +44,10 @@ async function postJson(url, json, init) {
         contentLength: text.length,
         logBody: init?.logBody,
     });
-    return response;
+    return {
+        response,
+        contentLength: text.length,
+    };
 }
 exports.postJson = postJson;
 // Similarly for the HTTP PATCH verb.
@@ -53,7 +60,10 @@ async function patchJson(url, json, init) {
         contentLength: text.length,
         logBody: init?.logBody,
     });
-    return response;
+    return {
+        response,
+        contentLength: text.length,
+    };
 }
 exports.patchJson = patchJson;
 //# sourceMappingURL=http-json.js.map

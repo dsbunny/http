@@ -11,7 +11,11 @@ export async function putJson(
 		identity?: string,
 		logBody?: boolean,
 	}
-): Promise<Response> {
+): Promise<{
+	response: Response,
+	contentLength: number,
+	contentMd5: string,
+}> {
 	const text = JSON.stringify(json);
 	const contentMd5 = createHash('md5').update(text).digest().toString('base64');
 
@@ -23,7 +27,11 @@ export async function putJson(
 		contentMd5,
 		logBody: init?.logBody,
 	});
-	return response;
+	return {
+		response,
+		contentLength: text.length,
+		contentMd5,
+	};
 }
 
 export async function getJson(
@@ -55,7 +63,10 @@ export async function postJson(
 		identity?: string,
 		logBody?: boolean,
 	}
-): Promise<Response> {
+): Promise<{
+	response: Response,
+	contentLength: number,
+}> {
 	const text = JSON.stringify(json);
 
 	const response = await postData(url, text, {
@@ -65,7 +76,10 @@ export async function postJson(
 		contentLength: text.length,
 		logBody: init?.logBody,
 	});
-	return response;
+	return {
+		response,
+		contentLength: text.length,
+	};
 }
 
 // Similarly for the HTTP PATCH verb.
@@ -77,7 +91,10 @@ export async function patchJson(
 		identity?: string,
 		logBody?: boolean,
 	}
-): Promise<Response> {
+): Promise<{
+	response: Response,
+	contentLength: number,
+}> {
 	const text = JSON.stringify(json);
 
 	const response = await patchData(url, text, {
@@ -87,5 +104,8 @@ export async function patchJson(
 		contentLength: text.length,
 		logBody: init?.logBody,
 	});
-	return response;
+	return {
+		response,
+		contentLength: text.length,
+	};
 }
