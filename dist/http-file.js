@@ -146,41 +146,54 @@ async function getMultiPartFile(url, init) {
         i * MAX_UPLOAD_PART_SIZE,
         Math.min((i + 1) * MAX_UPLOAD_PART_SIZE, init.contentLength) - 1,
     ]));
-    const handle = await promises_1.default.open(init.filePath, 'w+');
+    let handle = undefined;
     try {
+        handle = await promises_1.default.open(init.filePath, 'w');
+        if (typeof handle === 'undefined') {
+            throw new Error('Failed to open file');
+        }
         // Enable concurrent writes to different parts of the file.
         console.log(`Creating sparse file with size ${init.contentLength} bytes.`);
         await handle.truncate(init.contentLength);
-        const results = await (0, retry_js_1.execute_with_retry)(async (partNumber, start, end) => {
-            console.log(`Downloading part ${partNumber} of ${partCount} from ${start} to ${end}.`);
-            try {
-                const response = await getPart(url, {
-                    authorization: init.authorization,
-                    identity: init.identity,
-                    accept: init.accept,
-                    ETag: init.ETag,
-                    handle,
-                    logBody: init.logBody,
-                    start,
-                    end,
-                });
-                console.debug(`Part ${partNumber} status: ${response.status}`);
-                return { response, partNumber };
-            }
-            catch (error) {
-                console.error(`Part ${partNumber} error: ${error}`);
-                throw error;
-            }
-        }, parts, MAX_DOWNLOAD_CONCURRENCY, MAX_RETRY_COUNT, BACKOFF_MIN_INTERVAL, BACKOFF_MAX_INTERVAL);
-        await handle.close();
-        console.log('All parts downloaded');
-        return results;
     }
     catch (error) {
-        await handle.close();
-        console.error(`File download error: ${error}`);
+        console.error(`File open error: ${error}`);
         throw error;
     }
+    finally {
+        await handle?.close();
+    }
+    const results = await (0, retry_js_1.execute_with_retry)(async (partNumber, start, end) => {
+        console.log(`Downloading part ${partNumber} of ${partCount} from ${start} to ${end}.`);
+        let handle = undefined;
+        try {
+            handle = await promises_1.default.open(init.filePath, 'w+');
+            if (typeof handle === 'undefined') {
+                throw new Error('Failed to open file');
+            }
+            const response = await getPart(url, {
+                authorization: init.authorization,
+                identity: init.identity,
+                accept: init.accept,
+                ETag: init.ETag,
+                handle,
+                logBody: init.logBody,
+                start,
+                end,
+            });
+            console.debug(`Part ${partNumber} status: ${response.status}`);
+            return { response, partNumber };
+        }
+        catch (error) {
+            console.error(`Part ${partNumber} error: ${error}`);
+            throw error;
+        }
+        finally {
+            await handle?.close();
+        }
+    }, parts, MAX_DOWNLOAD_CONCURRENCY, MAX_RETRY_COUNT, BACKOFF_MIN_INTERVAL, BACKOFF_MAX_INTERVAL);
+    console.log('All parts downloaded');
+    return results;
 }
 exports.getMultiPartFile = getMultiPartFile;
 async function getPart(url, init) {
@@ -232,17 +245,14 @@ async function getPart(url, init) {
     }
     const stream = init.handle.createWriteStream({
         encoding: null,
-        autoClose: false,
         start: init.start,
     });
     const id = setTimeout(() => stream.destroy(), MAX_DOWNLOAD_TIME);
     try {
         await (0, promises_2.finished)(node_stream_1.Readable.fromWeb(response.body).pipe(stream));
-        stream.end();
     }
     catch (error) {
         console.error(`Part download error: ${error}`);
-        stream.destroy();
         throw error;
     }
     clearTimeout(id);

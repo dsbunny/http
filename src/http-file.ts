@@ -221,49 +221,59 @@ export async function getMultiPartFile(
 		Math.min((i + 1) * MAX_UPLOAD_PART_SIZE, init.contentLength) - 1,
 	]) as [number, number, number]);
 
-	const handle = await fs.open(init.filePath, 'w+');
-
+	let handle: fs.FileHandle | undefined = undefined;
 	try {
+		handle = await fs.open(init.filePath, 'w');
+		if(typeof handle === 'undefined') {
+			throw new Error('Failed to open file');
+		}
 		// Enable concurrent writes to different parts of the file.
 		console.log(`Creating sparse file with size ${init.contentLength} bytes.`);
 		await handle.truncate(init.contentLength);
-
-		const results = await execute_with_retry<[number, number, number], MultiPartResponse>(
-			async (partNumber: number, start: number, end: number) => {
-				console.log(`Downloading part ${partNumber} of ${partCount} from ${start} to ${end}.`);
-				try {
-					const response = await getPart(url, {
-						authorization: init.authorization,
-						identity: init.identity,
-						accept: init.accept,
-						ETag: init.ETag,
-						handle,
-						logBody: init.logBody,
-						start,
-						end,
-					});
-					console.debug(`Part ${partNumber} status: ${response.status}`);
-					return { response, partNumber };
-				} catch(error: unknown) {
-					console.error(`Part ${partNumber} error: ${error}`);
-					throw error;
-				}
-			},
-			parts,
-			MAX_DOWNLOAD_CONCURRENCY,
-			MAX_RETRY_COUNT,
-			BACKOFF_MIN_INTERVAL,
-			BACKOFF_MAX_INTERVAL,
-		);
-
-		await handle.close();
-		console.log('All parts downloaded');
-		return results;
 	} catch(error: unknown) {
-		await handle.close();
-		console.error(`File download error: ${error}`);
+		console.error(`File open error: ${error}`);
 		throw error;
+	} finally {
+		await handle?.close();
 	}
+
+	const results = await execute_with_retry<[number, number, number], MultiPartResponse>(
+		async (partNumber: number, start: number, end: number) => {
+			console.log(`Downloading part ${partNumber} of ${partCount} from ${start} to ${end}.`);
+			let handle: fs.FileHandle | undefined = undefined;
+			try {
+				handle = await fs.open(init.filePath, 'w+');
+				if(typeof handle === 'undefined') {
+					throw new Error('Failed to open file');
+				}
+				const response = await getPart(url, {
+					authorization: init.authorization,
+					identity: init.identity,
+					accept: init.accept,
+					ETag: init.ETag,
+					handle,
+					logBody: init.logBody,
+					start,
+					end,
+				});
+				console.debug(`Part ${partNumber} status: ${response.status}`);
+				return { response, partNumber };
+			} catch(error: unknown) {
+				console.error(`Part ${partNumber} error: ${error}`);
+				throw error;
+			} finally {
+				await handle?.close();
+			}
+		},
+		parts,
+		MAX_DOWNLOAD_CONCURRENCY,
+		MAX_RETRY_COUNT,
+		BACKOFF_MIN_INTERVAL,
+		BACKOFF_MAX_INTERVAL,
+	);
+
+	console.log('All parts downloaded');
+	return results;
 }
 
 async function getPart(
@@ -328,16 +338,13 @@ async function getPart(
 	}
 	const stream = init.handle.createWriteStream({
 		encoding: null,
-		autoClose: false,
 		start: init.start,
 	});
 	const id = setTimeout(() => stream.destroy(), MAX_DOWNLOAD_TIME);
 	try {
 		await finished(Readable.fromWeb(response.body as any).pipe(stream));
-		stream.end();
 	} catch(error: unknown) {
 		console.error(`Part download error: ${error}`);
-		stream.destroy();
 		throw error;
 	}
 	clearTimeout(id);
