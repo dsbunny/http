@@ -1,7 +1,5 @@
 // vim: tabstop=8 softtabstop=0 noexpandtab shiftwidth=8 nosmarttab
 
-import { Readable } from 'node:stream';
-// @ts-expect-error
 import { styleText } from 'node:util';
 import {
 	wait,

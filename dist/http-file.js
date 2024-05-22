@@ -141,6 +141,9 @@ async function getMultiPartFile(url, init) {
         Math.min((i + 1) * MAX_UPLOAD_PART_SIZE, init.contentLength) - 1,
     ]));
     const handle = await promises_1.default.open(init.filePath, 'w+');
+    // Create a sparse file with the correct size, enabling concurrent writes
+    // to different parts of the file.
+    await handle.truncate(init.contentLength);
     const results = await (0, retry_js_1.execute_with_retry)(async (partNumber, start, end) => {
         console.log(`Downloading part ${partNumber} of ${partCount} from ${start} to ${end}`);
         const response = await getPart(url, {
@@ -153,6 +156,7 @@ async function getMultiPartFile(url, init) {
             start,
             end,
         });
+        console.debug(`Part ${partNumber} status: ${response.status}`);
         return { response, partNumber };
     }, parts, MAX_DOWNLOAD_CONCURRENCY, MAX_RETRY_COUNT, BACKOFF_MIN_INTERVAL, BACKOFF_MAX_INTERVAL);
     console.log('All parts downloaded');

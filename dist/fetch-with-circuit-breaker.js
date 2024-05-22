@@ -5,7 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.fetch_with_circuit_breaker = exports.fetchBreaker = void 0;
-// @ts-expect-error
 const node_util_1 = require("node:util");
 const opossum_1 = __importDefault(require("opossum"));
 const fetch_with_retry_after_js_1 = require("./fetch-with-retry-after.js");

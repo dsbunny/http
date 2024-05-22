@@ -3,7 +3,6 @@
 // REF: https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.execute_with_retry = exports.retry = exports.exponential_backoff_with_jitter = exports.random_between = exports.wait = void 0;
-// @ts-expect-error
 const node_util_1 = require("node:util");
 function wait(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));

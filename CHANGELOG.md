@@ -1,4 +1,7 @@
 # Changelog
+## v2.0.6
+- Resize target as a sparse file, before concurrent download to eliminate concurrent resizing issues.
+
 ## v2.0.5
 - Style request and response body in _grey_, splitting into separate lines due to `docker log` resetting ANSI style per line.
 - Change HTTP command line to cyan.

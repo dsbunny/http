@@ -2,7 +2,6 @@
 // vim: tabstop=8 softtabstop=0 noexpandtab shiftwidth=8 nosmarttab
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.fetch_with_retry_after = exports.fetch_with_log = void 0;
-// @ts-expect-error
 const node_util_1 = require("node:util");
 const retry_js_1 = require("./retry.js");
 function style_for_status(status) {

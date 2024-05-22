@@ -1,7 +1,6 @@
 // vim: tabstop=8 softtabstop=0 noexpandtab shiftwidth=8 nosmarttab
 // REF: https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
 
-// @ts-expect-error
 import { styleText } from 'node:util';
 
 export function wait(ms: number): Promise<void> {

@@ -218,6 +218,10 @@ export async function getMultiPartFile(
 
 	const handle = await fs.open(init.filePath, 'w+');
 
+	// Create a sparse file with the correct size, enabling concurrent writes
+	// to different parts of the file.
+	await handle.truncate(init.contentLength);
+
 	const results = await execute_with_retry<[number, number, number], MultiPartResponse>(
 		async (partNumber: number, start: number, end: number) => {
 			console.log(`Downloading part ${partNumber} of ${partCount} from ${start} to ${end}`);
@@ -231,6 +235,7 @@ export async function getMultiPartFile(
 				start,
 				end,
 			});
+			console.debug(`Part ${partNumber} status: ${response.status}`);
 			return { response, partNumber };
 		},
 		parts,

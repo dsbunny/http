@@ -1,6 +1,5 @@
 // vim: tabstop=8 softtabstop=0 noexpandtab shiftwidth=8 nosmarttab
 
-// @ts-expect-error
 import { styleText } from 'node:util';
 import CircuitBreaker from 'opossum';
 import { fetch_with_log } from "./fetch-with-retry-after.js";
