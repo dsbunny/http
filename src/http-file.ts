@@ -223,42 +223,48 @@ export async function getMultiPartFile(
 
 	const handle = await fs.open(init.filePath, 'w+');
 
-	// Create a sparse file with the correct size, enabling concurrent writes
-	// to different parts of the file.
-	await handle.truncate(init.contentLength);
+	try {
+		// Enable concurrent writes to different parts of the file.
+		console.log(`Creating sparse file with size ${init.contentLength} bytes.`);
+		await handle.truncate(init.contentLength);
 
-	const results = await execute_with_retry<[number, number, number], MultiPartResponse>(
-		async (partNumber: number, start: number, end: number) => {
-			console.log(`Downloading part ${partNumber} of ${partCount} from ${start} to ${end}`);
-			try {
-				const response = await getPart(url, {
-					authorization: init.authorization,
-					identity: init.identity,
-					accept: init.accept,
-					ETag: init.ETag,
-					handle,
-					logBody: init.logBody,
-					start,
-					end,
-				});
-				console.debug(`Part ${partNumber} status: ${response.status}`);
-				return { response, partNumber };
-			} catch(error: unknown) {
-				console.error(`Part ${partNumber} error: ${error}`);
-				throw error;
-			}
-		},
-		parts,
-		MAX_DOWNLOAD_CONCURRENCY,
-		MAX_RETRY_COUNT,
-		BACKOFF_MIN_INTERVAL,
-		BACKOFF_MAX_INTERVAL,
-	);
+		const results = await execute_with_retry<[number, number, number], MultiPartResponse>(
+			async (partNumber: number, start: number, end: number) => {
+				console.log(`Downloading part ${partNumber} of ${partCount} from ${start} to ${end}.`);
+				try {
+					const response = await getPart(url, {
+						authorization: init.authorization,
+						identity: init.identity,
+						accept: init.accept,
+						ETag: init.ETag,
+						handle,
+						logBody: init.logBody,
+						start,
+						end,
+					});
+					console.debug(`Part ${partNumber} status: ${response.status}`);
+					return { response, partNumber };
+				} catch(error: unknown) {
+					console.error(`Part ${partNumber} error: ${error}`);
+					throw error;
+				}
+			},
+			parts,
+			MAX_DOWNLOAD_CONCURRENCY,
+			MAX_RETRY_COUNT,
+			BACKOFF_MIN_INTERVAL,
+			BACKOFF_MAX_INTERVAL,
+		);
 
-	console.log('All parts downloaded');
-	await handle.close()
-
-	return results;
+		console.log('All parts downloaded');
+		return results;
+	} catch(error: unknown) {
+		console.error(`File download error: ${error}`);
+		throw error;
+	} finally {
+		console.log(`Closing file: ${init.filePath}`);
+		await handle.close();
+	}
 }
 
 async function getPart(
@@ -323,11 +329,18 @@ async function getPart(
 	}
 	const stream = init.handle.createWriteStream({
 		encoding: null,
-		autoClose: true,
+		autoClose: false,
 		start: init.start,
 	});
 	const id = setTimeout(() => stream.destroy(), MAX_DOWNLOAD_TIME);
-	await finished(Readable.fromWeb(response.body as any).pipe(stream));
+	try {
+		await finished(Readable.fromWeb(response.body as any).pipe(stream));
+		stream.end();
+	} catch(error: unknown) {
+		console.error(`Part download error: ${error}`);
+		stream.destroy();
+		throw error;
+	}
 	clearTimeout(id);
 	// FIXME: Verify MD5 hash of the part?
 	return response;
