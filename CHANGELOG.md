@@ -1,6 +1,7 @@
 # Changelog
 ## v2.0.6
 - Resize target as a sparse file, before concurrent download to eliminate concurrent resizing issues.
+- Report exception throw on part failure.
 
 ## v2.0.5
 - Style request and response body in _grey_, splitting into separate lines due to `docker log` resetting ANSI style per line.

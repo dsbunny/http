@@ -37,19 +37,25 @@ async function putMultiPartFile(parts, filePath, init) {
     const handle = await promises_1.default.open(filePath, 'r');
     const results = await (0, retry_js_1.execute_with_retry)(async (url, partNumber, start, end, contentLength, contentMd5) => {
         console.log(`Uploading part ${partNumber} of ${partCount} from ${start} to ${end}`);
-        const ETag = `"${Buffer.from(contentMd5, 'base64').toString('hex')}"`;
-        const response = await putPart(url, handle, {
-            authorization: init.authorization,
-            identity: init.identity,
-            ETag,
-            contentType: init.contentType,
-            contentLength,
-            contentMd5,
-            logBody: init.logBody,
-            start,
-            end,
-        });
-        return { response, partNumber };
+        try {
+            const ETag = `"${Buffer.from(contentMd5, 'base64').toString('hex')}"`;
+            const response = await putPart(url, handle, {
+                authorization: init.authorization,
+                identity: init.identity,
+                ETag,
+                contentType: init.contentType,
+                contentLength,
+                contentMd5,
+                logBody: init.logBody,
+                start,
+                end,
+            });
+            return { response, partNumber };
+        }
+        catch (error) {
+            console.error(`Part ${partNumber} error: ${error}`);
+            throw error;
+        }
     }, parameters, MAX_UPLOAD_CONCURRENCY, MAX_RETRY_COUNT, BACKOFF_MIN_INTERVAL, BACKOFF_MAX_INTERVAL);
     console.log('All parts uploaded');
     await handle.close();
@@ -146,18 +152,24 @@ async function getMultiPartFile(url, init) {
     await handle.truncate(init.contentLength);
     const results = await (0, retry_js_1.execute_with_retry)(async (partNumber, start, end) => {
         console.log(`Downloading part ${partNumber} of ${partCount} from ${start} to ${end}`);
-        const response = await getPart(url, {
-            authorization: init.authorization,
-            identity: init.identity,
-            accept: init.accept,
-            ETag: init.ETag,
-            handle,
-            logBody: init.logBody,
-            start,
-            end,
-        });
-        console.debug(`Part ${partNumber} status: ${response.status}`);
-        return { response, partNumber };
+        try {
+            const response = await getPart(url, {
+                authorization: init.authorization,
+                identity: init.identity,
+                accept: init.accept,
+                ETag: init.ETag,
+                handle,
+                logBody: init.logBody,
+                start,
+                end,
+            });
+            console.debug(`Part ${partNumber} status: ${response.status}`);
+            return { response, partNumber };
+        }
+        catch (error) {
+            console.error(`Part ${partNumber} error: ${error}`);
+            throw error;
+        }
     }, parts, MAX_DOWNLOAD_CONCURRENCY, MAX_RETRY_COUNT, BACKOFF_MIN_INTERVAL, BACKOFF_MAX_INTERVAL);
     console.log('All parts downloaded');
     await handle.close();

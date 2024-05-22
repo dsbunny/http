@@ -60,19 +60,24 @@ export async function putMultiPartFile(
 	const results = await execute_with_retry<[string, number, number, number, number, string], MultiPartResponse>(
 		async (url: string, partNumber: number, start: number, end: number, contentLength: number, contentMd5: string) => {
 			console.log(`Uploading part ${partNumber} of ${partCount} from ${start} to ${end}`);
-			const ETag = `"${Buffer.from(contentMd5, 'base64').toString('hex')}"`;
-			const response = await putPart(url, handle, {
-				authorization: init.authorization,
-				identity: init.identity,
-				ETag,
-				contentType: init.contentType,
-				contentLength,
-				contentMd5,
-				logBody: init.logBody,
-				start,
-				end,
-			});
-			return { response, partNumber };
+			try {
+				const ETag = `"${Buffer.from(contentMd5, 'base64').toString('hex')}"`;
+				const response = await putPart(url, handle, {
+					authorization: init.authorization,
+					identity: init.identity,
+					ETag,
+					contentType: init.contentType,
+					contentLength,
+					contentMd5,
+					logBody: init.logBody,
+					start,
+					end,
+				});
+				return { response, partNumber };
+			} catch(error: unknown) {
+				console.error(`Part ${partNumber} error: ${error}`);
+				throw error;
+			}
 		},
 		parameters,
 		MAX_UPLOAD_CONCURRENCY,
@@ -225,18 +230,23 @@ export async function getMultiPartFile(
 	const results = await execute_with_retry<[number, number, number], MultiPartResponse>(
 		async (partNumber: number, start: number, end: number) => {
 			console.log(`Downloading part ${partNumber} of ${partCount} from ${start} to ${end}`);
-			const response = await getPart(url, {
-				authorization: init.authorization,
-				identity: init.identity,
-				accept: init.accept,
-				ETag: init.ETag,
-				handle,
-				logBody: init.logBody,
-				start,
-				end,
-			});
-			console.debug(`Part ${partNumber} status: ${response.status}`);
-			return { response, partNumber };
+			try {
+				const response = await getPart(url, {
+					authorization: init.authorization,
+					identity: init.identity,
+					accept: init.accept,
+					ETag: init.ETag,
+					handle,
+					logBody: init.logBody,
+					start,
+					end,
+				});
+				console.debug(`Part ${partNumber} status: ${response.status}`);
+				return { response, partNumber };
+			} catch(error: unknown) {
+				console.error(`Part ${partNumber} error: ${error}`);
+				throw error;
+			}
 		},
 		parts,
 		MAX_DOWNLOAD_CONCURRENCY,
