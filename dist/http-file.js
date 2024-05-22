@@ -172,16 +172,14 @@ async function getMultiPartFile(url, init) {
                 throw error;
             }
         }, parts, MAX_DOWNLOAD_CONCURRENCY, MAX_RETRY_COUNT, BACKOFF_MIN_INTERVAL, BACKOFF_MAX_INTERVAL);
+        await handle.close();
         console.log('All parts downloaded');
         return results;
     }
     catch (error) {
+        await handle.close();
         console.error(`File download error: ${error}`);
         throw error;
-    }
-    finally {
-        console.log(`Closing file: ${init.filePath}`);
-        await handle.close();
     }
 }
 exports.getMultiPartFile = getMultiPartFile;

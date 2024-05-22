@@ -256,14 +256,13 @@ export async function getMultiPartFile(
 			BACKOFF_MAX_INTERVAL,
 		);
 
+		await handle.close();
 		console.log('All parts downloaded');
 		return results;
 	} catch(error: unknown) {
+		await handle.close();
 		console.error(`File download error: ${error}`);
 		throw error;
-	} finally {
-		console.log(`Closing file: ${init.filePath}`);
-		await handle.close();
 	}
 }
 
